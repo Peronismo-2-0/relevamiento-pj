@@ -7,6 +7,7 @@ import { CATEGORIAS, AFINIDAD, TAGS } from '../lib/constantes'
 
 const CENTRO = [-31.5375, -68.5364] // San Juan Capital
 const vacio = { nombre: '', direccion: '', telefono: '', dni: '', categoria: 'vecino', afinidad: '', observaciones: '', tags: [] }
+const CLASES_AFINIDAD = ['verde', 'amarillo', 'rojo']
 
 function Selector({ onPick }) { useMapEvents({ click: (e) => onPick([e.latlng.lat, e.latlng.lng]) }); return null }
 
@@ -50,7 +51,7 @@ export default function Mapa() {
     <>
       <MapContainer center={CENTRO} zoom={14} className="mapa">
         <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-        {zonas.map((z) => <GeoJSON key={z.id} data={z.geojson} style={{ color: '#0b5fa5', weight: 2, fillOpacity: 0.08 }} />)}
+        {zonas.map((z) => <GeoJSON key={z.id} data={z.geojson} style={{ color: '#12294a', weight: 3, fillColor: '#74acdf', fillOpacity: 0.2 }} />)}
         {punto && <Marker position={punto} />}
         <Selector onPick={setPunto} />
       </MapContainer>
@@ -64,8 +65,8 @@ export default function Mapa() {
         <label>Categoría</label>
         <select value={f.categoria} onChange={(e) => set('categoria', e.target.value)}>{CATEGORIAS.map(([v, t]) => <option key={v} value={v}>{t}</option>)}</select>
         <label>Afinidad *</label>
-        <div className="sem">{AFINIDAD.map(([v, t, c]) => (
-          <button type="button" key={v} className={f.afinidad === v ? 'on' : ''} style={{ background: c }} onClick={() => set('afinidad', v)}>{t}</button>))}
+        <div className="sem">{AFINIDAD.map(([v, t], i) => (
+          <button type="button" key={v} className={`${CLASES_AFINIDAD[i]} ${f.afinidad === v ? 'on' : ''}`} onClick={() => set('afinidad', v)}>{t}</button>))}
         </div>
         <label>Observaciones</label><textarea rows="3" value={f.observaciones} onChange={(e) => set('observaciones', e.target.value)} />
         <div className="tags">{TAGS.map(([v, t]) => (
@@ -73,7 +74,7 @@ export default function Mapa() {
             onChange={(e) => set('tags', e.target.checked ? [...f.tags, v] : f.tags.filter((x) => x !== v))} />{t}</label>))}
         </div>
         {msg && <p role="status">{msg}</p>}
-        <button>Guardar relevamiento</button>
+        <button className="guardar">Guardar relevamiento</button>
       </form>
     </>
   )

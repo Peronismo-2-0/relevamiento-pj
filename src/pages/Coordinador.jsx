@@ -13,7 +13,7 @@ const CATEGORIAS = {
   comercio_referente: 'Comercio Referente'
 }
 const AFINIDAD_LABEL = { verde: 'Verde', amarillo: 'Amarillo', rojo: 'Rojo' }
-const COLOR_AFINIDAD = { verde: '#16a34a', amarillo: '#eab308', rojo: '#dc2626' }
+const COLOR_AFINIDAD = { verde: '#2e8b57', amarillo: '#d99a00', rojo: '#c8372d' }
 
 // Extrae [lat, lng] si geom viene en formato GeoJSON { type: 'Point', coordinates: [lng, lat] }
 function extraerLatLng(geom) {
@@ -35,6 +35,7 @@ export default function Coordinador() {
   const [error, setError] = useState('')
   const [filtroAfinidad, setFiltroAfinidad] = useState('todas')
   const [filtroCategoria, setFiltroCategoria] = useState('todas')
+  const [filtroZona, setFiltroZona] = useState('todas')
   const [busqueda, setBusqueda] = useState('')
 
   async function cargar() {
@@ -76,6 +77,7 @@ export default function Coordinador() {
   const filtrados = lista.filter((r) => {
     if (filtroAfinidad !== 'todas' && r.afinidad !== filtroAfinidad) return false
     if (filtroCategoria !== 'todas' && r.categoria !== filtroCategoria) return false
+    if (filtroZona !== 'todas' && r.zona_id !== filtroZona) return false
     if (busqueda.trim()) {
       const q = busqueda.toLowerCase()
       const texto = `${r.nombre} ${r.direccion} ${r.observaciones || ''}`.toLowerCase()
@@ -156,28 +158,20 @@ export default function Coordinador() {
   }
 
   return (
-    <div style={{ padding: '1rem', maxWidth: 960, margin: '0 auto' }}>
+    <div>
       <h2>Panel del coordinador — {JUNTAS[perfil?.junta_id] || 'Todas las juntas'}</h2>
-      <p style={{ marginTop: 0, color: '#555' }}>Hola, {perfil?.nombre}.</p>
+      <p style={{ marginTop: 0, color: '#475467' }}>Hola, {perfil?.nombre}.</p>
 
-      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-        <div style={{ padding: '0.6rem 1rem', border: '1px solid #ddd', borderRadius: 6 }}>
-          <strong>Total:</strong> {conteo.total}
-        </div>
-        <div style={{ padding: '0.6rem 1rem', border: '1px solid #b7e1cd', background: '#f1fbf5', borderRadius: 6 }}>
-          <strong>Verde:</strong> {conteo.verde}
-        </div>
-        <div style={{ padding: '0.6rem 1rem', border: '1px solid #fce8b2', background: '#fefbf0', borderRadius: 6 }}>
-          <strong>Amarillo:</strong> {conteo.amarillo}
-        </div>
-        <div style={{ padding: '0.6rem 1rem', border: '1px solid #f4c7c3', background: '#fdf3f2', borderRadius: 6 }}>
-          <strong>Rojo:</strong> {conteo.rojo}
-        </div>
+      <div className="contadores">
+        <div className="contador"><span>Total</span><strong>{conteo.total}</strong></div>
+        <div className="contador verde"><span>Verde</span><strong>{conteo.verde}</strong></div>
+        <div className="contador amarillo"><span>Amarillo</span><strong>{conteo.amarillo}</strong></div>
+        <div className="contador rojo"><span>Rojo</span><strong>{conteo.rojo}</strong></div>
       </div>
 
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '1rem' }}>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.85rem' }}>Afinidad</label>
+      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '1rem' }}>
+        <div style={{ flex: '1 1 150px' }}>
+          <label>Afinidad</label>
           <select value={filtroAfinidad} onChange={(e) => setFiltroAfinidad(e.target.value)}>
             <option value="todas">Todas</option>
             <option value="verde">Verde</option>
@@ -186,8 +180,8 @@ export default function Coordinador() {
           </select>
         </div>
 
-        <div>
-          <label style={{ display: 'block', fontSize: '0.85rem' }}>Categoría</label>
+        <div style={{ flex: '1 1 150px' }}>
+          <label>Categoría</label>
           <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
             <option value="todas">Todas</option>
             {Object.entries(CATEGORIAS).map(([k, v]) => (
@@ -196,8 +190,18 @@ export default function Coordinador() {
           </select>
         </div>
 
-        <div style={{ flex: '1 1 200px' }}>
-          <label style={{ display: 'block', fontSize: '0.85rem' }}>Buscar nombre o dirección</label>
+        <div style={{ flex: '1 1 150px' }}>
+          <label>Zona</label>
+          <select value={filtroZona} onChange={(e) => setFiltroZona(e.target.value)}>
+            <option value="todas">Todas</option>
+            {Object.entries(zonasMap).map(([id, nombre]) => (
+              <option key={id} value={id}>{nombre}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ flex: '1 1 100%' }}>
+          <label>Buscar nombre o dirección</label>
           <input
             placeholder="Ej. Sarmiento, López..."
             value={busqueda}
@@ -205,13 +209,13 @@ export default function Coordinador() {
           />
         </div>
 
-        <button type="button" className="sec" style={{ width: 'auto' }} onClick={cargar}>
+        <button type="button" className="sec" style={{ flex: '1 1 140px' }} onClick={cargar}>
           Actualizar
         </button>
 
         <button
           type="button"
-          style={{ width: 'auto' }}
+          style={{ flex: '1 1 140px' }}
           disabled={!filtrados.length}
           onClick={exportarCSV}
         >
@@ -219,76 +223,95 @@ export default function Coordinador() {
         </button>
       </div>
 
-      {error && <p style={{ color: '#b00020' }}>{error}</p>}
+      {error && <p role="alert" style={{ color: 'var(--rojo)' }}>{error}</p>}
 
-      <div style={{ height: 380, width: '100%', marginBottom: '1.25rem', borderRadius: 8, overflow: 'hidden', border: '1px solid #ccc' }}>
-        <MapContainer center={CENTRO} zoom={14} style={{ height: '100%', width: '100%' }}>
-          <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-          {zonasGeo.map((z) => (
-            <GeoJSON key={z.id} data={z.geojson} style={{ color: '#0b5fa5', weight: 2, fillOpacity: 0.08 }} />
-          ))}
-          {puntosEnMapa.map((r) => (
-            <CircleMarker
-              key={r.id}
-              center={r.coords}
-              radius={8}
-              pathOptions={{
-                color: '#111827',
-                weight: 1.5,
-                fillColor: COLOR_AFINIDAD[r.afinidad] || '#0b5fa5',
-                fillOpacity: 0.9
-              }}
-            >
-              <Popup>
-                <strong>{r.nombre}</strong><br />
-                {r.direccion}<br />
-                Afinidad: <strong>{AFINIDAD_LABEL[r.afinidad] || r.afinidad}</strong><br />
-                Militante: {perfilesMap[r.militante_id] || '—'}<br />
-                Fecha: {new Date(r.capturado_en).toLocaleDateString('es-AR')}
-                {r.observaciones ? <><br />Obs: {r.observaciones}</> : null}
-              </Popup>
-            </CircleMarker>
-          ))}
-        </MapContainer>
-      </div>
+      <MapContainer center={CENTRO} zoom={14} className="mapa" style={{ marginBottom: '1.25rem' }}>
+        <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {zonasGeo.map((z) => (
+          <GeoJSON key={z.id} data={z.geojson} style={{ color: '#12294a', weight: 3, fillColor: '#74acdf', fillOpacity: 0.2 }} />
+        ))}
+        {puntosEnMapa.map((r) => (
+          <CircleMarker
+            key={r.id}
+            center={r.coords}
+            radius={9}
+            pathOptions={{
+              color: '#101828',
+              weight: 2,
+              fillColor: COLOR_AFINIDAD[r.afinidad] || '#12294a',
+              fillOpacity: 0.95
+            }}
+          >
+            <Popup>
+              <strong>{r.nombre}</strong><br />
+              {r.direccion}<br />
+              Afinidad: <strong>{AFINIDAD_LABEL[r.afinidad] || r.afinidad}</strong><br />
+              Militante: {perfilesMap[r.militante_id] || '—'}<br />
+              Fecha: {new Date(r.capturado_en).toLocaleDateString('es-AR')}
+              {r.observaciones ? <><br />Obs: {r.observaciones}</> : null}
+            </Popup>
+          </CircleMarker>
+        ))}
+      </MapContainer>
 
       {cargando ? (
         <p>Cargando relevamientos…</p>
       ) : !filtrados.length ? (
         <p>No hay relevamientos para mostrar con esos filtros.</p>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #ccc', textAlign: 'left' }}>
-                <th style={{ padding: '0.5rem' }}>Fecha</th>
-                <th style={{ padding: '0.5rem' }}>Zona</th>
-                <th style={{ padding: '0.5rem' }}>Nombre</th>
-                <th style={{ padding: '0.5rem' }}>Dirección</th>
-                <th style={{ padding: '0.5rem' }}>Teléfono</th>
-                <th style={{ padding: '0.5rem' }}>Categoría</th>
-                <th style={{ padding: '0.5rem' }}>Afinidad</th>
-                <th style={{ padding: '0.5rem' }}>Militante</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((r) => (
-                <tr key={r.id} style={{ borderBottom: '1px solid #eee' }}>
-                  <td style={{ padding: '0.5rem', whiteSpace: 'nowrap' }}>
-                    {new Date(r.capturado_en).toLocaleDateString('es-AR')}
-                  </td>
-                  <td style={{ padding: '0.5rem' }}>{zonasMap[r.zona_id] || '—'}</td>
-                  <td style={{ padding: '0.5rem' }}><strong>{r.nombre}</strong></td>
-                  <td style={{ padding: '0.5rem' }}>{r.direccion}</td>
-                  <td style={{ padding: '0.5rem' }}>{r.telefono || '—'}</td>
-                  <td style={{ padding: '0.5rem' }}>{CATEGORIAS[r.categoria] || r.categoria}</td>
-                  <td style={{ padding: '0.5rem' }}>{AFINIDAD_LABEL[r.afinidad] || r.afinidad}</td>
-                  <td style={{ padding: '0.5rem' }}>{perfilesMap[r.militante_id] || '—'}</td>
+        <>
+          {/* Celular: fichas */}
+          <div className="vista-fichas">
+            {filtrados.map((r) => (
+              <div key={r.id} className={`ficha ${r.afinidad}`}>
+                <strong>{r.nombre}</strong>
+                <div>{r.direccion}</div>
+                <div style={{ color: '#475467', fontSize: '.9rem' }}>
+                  {new Date(r.capturado_en).toLocaleDateString('es-AR')} · {zonasMap[r.zona_id] || '—'} · {perfilesMap[r.militante_id] || '—'}
+                </div>
+                {r.telefono && <div>Tel: {r.telefono}</div>}
+                <span className="etiqueta">{CATEGORIAS[r.categoria] || r.categoria}</span>
+                <span className="etiqueta">{AFINIDAD_LABEL[r.afinidad] || r.afinidad}</span>
+                {(r.tags || []).map((t) => <span key={t} className="etiqueta">{t}</span>)}
+              </div>
+            ))}
+          </div>
+
+          {/* Compu: tabla */}
+          <div className="vista-tabla">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Zona</th>
+                  <th>Nombre</th>
+                  <th>Dirección</th>
+                  <th>Teléfono</th>
+                  <th>Categoría</th>
+                  <th>Afinidad</th>
+                  <th>Militante</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtrados.map((r) => (
+                  <tr key={r.id}>
+                    <td style={{ whiteSpace: 'nowrap' }}>{new Date(r.capturado_en).toLocaleDateString('es-AR')}</td>
+                    <td>{zonasMap[r.zona_id] || '—'}</td>
+                    <td><strong>{r.nombre}</strong></td>
+                    <td>{r.direccion}</td>
+                    <td>{r.telefono || '—'}</td>
+                    <td>{CATEGORIAS[r.categoria] || r.categoria}</td>
+                    <td>
+                      <span style={{ color: COLOR_AFINIDAD[r.afinidad], fontWeight: 700 }}>● </span>
+                      {AFINIDAD_LABEL[r.afinidad] || r.afinidad}
+                    </td>
+                    <td>{perfilesMap[r.militante_id] || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )
