@@ -97,6 +97,18 @@ export default function Coordinador() {
     rojo: lista.filter((r) => r.afinidad === 'rojo').length
   }
 
+  // Avance por zona: cuántos relevamientos tiene cada zona y quién los cargó
+  const avancePorZona = Object.entries(zonasMap).map(([id, nombre]) => {
+    const deZona = lista.filter((r) => r.zona_id === id)
+    const porMilitante = {}
+    deZona.forEach((r) => {
+      const n = perfilesMap[r.militante_id] || '—'
+      porMilitante[n] = (porMilitante[n] || 0) + 1
+    })
+    return { id, nombre, total: deZona.length, porMilitante }
+  })
+  const maxZona = Math.max(1, ...avancePorZona.map((z) => z.total))
+
   async function exportarCSV() {
     if (!filtrados.length) return
 
@@ -167,6 +179,27 @@ export default function Coordinador() {
         <div className="contador verde"><span>Verde</span><strong>{conteo.verde}</strong></div>
         <div className="contador amarillo"><span>Amarillo</span><strong>{conteo.amarillo}</strong></div>
         <div className="contador rojo"><span>Rojo</span><strong>{conteo.rojo}</strong></div>
+      </div>
+
+      <h3>Avance por zona</h3>
+      <div style={{ display: 'grid', gap: '0.6rem', marginBottom: '1.25rem' }}>
+        {avancePorZona.length === 0 && <p>Todavía no hay zonas para mostrar.</p>}
+        {avancePorZona.map((z) => (
+          <div key={z.id} style={{ background: '#fff', border: '1px solid #D0D5DD', borderRadius: 8, padding: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <strong>{z.nombre}</strong>
+              <strong>{z.total}</strong>
+            </div>
+            <div style={{ background: '#EAF2FA', borderRadius: 6, height: 12, marginTop: 6, overflow: 'hidden' }}>
+              <div style={{ width: `${(z.total / maxZona) * 100}%`, height: '100%', background: '#12294A' }} />
+            </div>
+            <div style={{ color: '#475467', fontSize: '.9rem', marginTop: 6 }}>
+              {z.total === 0
+                ? 'Sin relevamientos todavía'
+                : Object.entries(z.porMilitante).map(([n, c]) => `${n}: ${c}`).join(' · ')}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '1rem' }}>
