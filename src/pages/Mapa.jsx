@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import L from 'leaflet'
 import { MapContainer, TileLayer, GeoJSON, Marker, useMapEvents } from 'react-leaflet'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
@@ -8,6 +9,15 @@ import { CATEGORIAS, AFINIDAD, TAGS } from '../lib/constantes'
 const CENTRO = [-31.5375, -68.5364] // San Juan Capital
 const vacio = { nombre: '', direccion: '', telefono: '', dni: '', categoria: 'vecino', afinidad: '', observaciones: '', tags: [] }
 const CLASES_AFINIDAD = ['verde', 'amarillo', 'rojo']
+
+// Pin propio: círculo azul del PJ con borde blanco. No usa imágenes, así que
+// se ve siempre (con Vite las imágenes por defecto de Leaflet se pierden).
+const PIN = L.divIcon({
+  className: '',
+  html: '<div style="width:28px;height:28px;border-radius:50%;background:#12294A;border:4px solid #fff;box-shadow:0 0 0 2px #12294A,0 2px 6px rgba(0,0,0,.45);box-sizing:border-box;"></div>',
+  iconSize: [28, 28],
+  iconAnchor: [14, 14]
+})
 
 function Selector({ onPick }) { useMapEvents({ click: (e) => onPick([e.latlng.lat, e.latlng.lng]) }); return null }
 
@@ -52,7 +62,7 @@ export default function Mapa() {
       <MapContainer center={CENTRO} zoom={14} className="mapa">
         <TileLayer attribution="© OpenStreetMap" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {zonas.map((z) => <GeoJSON key={z.id} data={z.geojson} style={{ color: '#12294a', weight: 3, fillColor: '#74acdf', fillOpacity: 0.2 }} />)}
-        {punto && <Marker position={punto} />}
+        {punto && <Marker position={punto} icon={PIN} />}
         <Selector onPick={setPunto} />
       </MapContainer>
       <button className="sec" style={{ marginTop: '.5rem' }} onClick={usarGPS}>Usar mi ubicación GPS</button>
